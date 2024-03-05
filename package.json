@@ -1,8 +1,7 @@
 {
   "dependencies": {
     "@aws-sdk/util-dynamodb": "^3.525.0",
-    "aws-sdk": "^2.1570.0",
-    "fast-csv": "^5.0.1"
+    "aws-sdk": "^2.1570.0"
   },
   "name": "y",
   "description": "",
