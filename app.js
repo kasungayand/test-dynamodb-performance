@@ -77,17 +77,17 @@ const generateSampleData = (index) => {
 const insertItemsInBatches = async () => {
     for(let j=1;j<=1000;j++){
         const jsonFilePath = `output-${j}.json`;
-        fs.access(jsonFilePath, fs.constants.F_OK, async (err) => {
+        fs.access(`outputs/${jsonFilePath}`, fs.constants.F_OK, async (err) => {
             if (err) {
-                fs.writeFile(jsonFilePath, '', (err) => {
+                fs.writeFile(`outputs/${jsonFilePath}`, '', (err) => {
                 });
             }
             const params = {
                 Bucket: 'dynamodb-load-test-data',
                 Key: jsonFilePath,
-                Body: fs.createReadStream(jsonFilePath)
+                Body: fs.createReadStream(`outputs/${jsonFilePath}`)
             };
-            const records = Array.from({ length: 1000 }, (_, index) => generateSampleData(`${j}#${index}`));
+            const records = Array.from({ length: 1001 }, (_, index) => generateSampleData(`${j}#${index}`));
             let jsonString = JSON.stringify(records).replace(/[\[\]]/g, '').replace(/(?<=})\s*,\s*(?={"Item")/g, '');
             fs.writeFileSync(`outputs/${jsonFilePath}`, jsonString);
             const data = await s3.upload(params).promise();   
