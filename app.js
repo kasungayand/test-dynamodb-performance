@@ -67,7 +67,7 @@ const insertItemsInBatches = async () => {
                 writeFile(`outputs/${jsonFilePath}`, '', (err) => {
                 });
             }
-            const records = Array.from({ length: 2000 }, (_, index) => generateSampleData(j, index));
+            const records = Array.from({ length: 1000 }, (_, index) => generateSampleData(j, index));
             let jsonString = JSON.stringify(records).replace(/^[\[\]]|[\[\]]$/g, '').replace(/(?<=})\s*,\s*(?={"Item")/g, '');
             writeFileSync(`outputs/${jsonFilePath}`, jsonString);
             const data = await s3.send(new PutObjectCommand({
