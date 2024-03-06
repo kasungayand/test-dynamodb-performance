@@ -60,14 +60,14 @@ const getS3Items = async () => {
 }
 
 const insertItemsInBatches = async () => {
-    for(let j=1;j<=1;j++){
+    for(let j=1;j<=1000;j++){
         const jsonFilePath = `output-${randomUUID()}.json`;
         access(`outputs/${jsonFilePath}`, constants.F_OK, async (err) => {
             if (err) {
                 writeFile(`outputs/${jsonFilePath}`, '', (err) => {
                 });
             }
-            const records = Array.from({ length: 2 }, (_, index) => generateSampleData(j, index));
+            const records = Array.from({ length: 2000 }, (_, index) => generateSampleData(j, index));
             let jsonString = JSON.stringify(records).replace(/^[\[\]]|[\[\]]$/g, '').replace(/(?<=})\s*,\s*(?={"Item")/g, '');
             writeFileSync(`outputs/${jsonFilePath}`, jsonString);
             const data = await s3.send(new PutObjectCommand({
