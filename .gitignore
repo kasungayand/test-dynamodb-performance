@@ -1,3 +1,4 @@
 node_modules
 outputs/*
 t3a.xlarge.pem
+.env
