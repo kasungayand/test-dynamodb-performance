@@ -30,7 +30,7 @@ const generateSampleData = (index) => {
         "timestamp": Date.now().toString(),
         "Title": "Book 101 Title",
         "ISBN": "111-1111111111",
-        "Author": {"surname": "Joe","lastname":"Biden"},
+        "Authors": [{"surname": "Joe","lastname":"Biden"},{"surname": "Joe","lastname":"Biden"}],
         "Price": "200",
         "Dimensions": "8.5 x 11.0 x 0.5",
         "PageCount": "500",
@@ -81,7 +81,7 @@ const insertItemsInBatches = async () => {
                 Body: fs.createReadStream(`outputs/${jsonFilePath}`)
             };
             const records = Array.from({ length: 1001 }, (_, index) => generateSampleData(`${j}#${index}`));
-            let jsonString = JSON.stringify(records).replace(/[\[\]]/g, '').replace(/(?<=})\s*,\s*(?={"Item")/g, '');
+            let jsonString = JSON.stringify(records).replace(/^[\[\]]|[\[\]]$/g, '').replace(/(?<=})\s*,\s*(?={"Item")/g, '');
             fs.writeFileSync(`outputs/${jsonFilePath}`, jsonString);
             const data = await s3.upload(params).promise();   
         });
