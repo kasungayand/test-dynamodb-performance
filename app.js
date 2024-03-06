@@ -1,12 +1,20 @@
+require('dotenv').config()
 const AWS = require('aws-sdk');
 const { marshall } = require('@aws-sdk/util-dynamodb');
 const fs = require('fs');
 
-AWS.config.update({
-  region: 'us-east-1', // Replace with your DynamoDB region
-  accessKeyId: 'AKIAW6WNWLZO7VAAQKEM', // Replace with your AWS access key
-  secretAccessKey: '6N0rCnQ7WtqxlR+5+JHx3CdGlPNZSFZWDFytx3Ij' // Replace with your AWS secret key
-});
+let awsConfigParams = {
+    region: 'us-east-1'
+}
+
+if(process.env.local && parseInt(process.env.local) == 1)
+    awsConfigParams = {
+        ...awsConfigParams,
+        accessKeyId: process.env.aws_access_key, // Replace with your AWS access key
+        secretAccessKey: process.env.aws_secret_access_key // Replace with your AWS secret key
+    }
+
+AWS.config.update(awsConfigParams);
 
 const dynamoDB = new AWS.DynamoDB.DocumentClient();
 const s3 = new AWS.S3();
@@ -16,19 +24,6 @@ const numberOfItems = 1000000;
 
 // Function to generate sample data
 const generateSampleData = (index) => {
-//   return {
-//     "settings_pk": {"S": index.toString()},
-//     "timestamp": {"S": Date.now().toString()},
-//     "Title": {"S": "Book 101 Title"},
-//     "ISBN": {"S": "111-1111111111"},
-//     "Authors": {"L": [{"S": "Author1"}]},
-//     "Price": {"N": "2"},
-//     "Dimensions": {"S": "8.5 x 11.0 x 0.5"},
-//     "PageCount": {"N": "500"},
-//     "InPublication": {"BOOL": true},
-//     "ProductCategory": {"S": "Book"},
-//     "ProductDescrription": {"S": "DynamoDB is primarily a key-value store in the sense that its data model consists of key-value pairs in a schemaless, very large, non-relational table of rows (records). It does not support relational database management systems (RDBMS) methods to join tables through foreign keys"}
-//   };
   return {
     "Item": marshall({
         "settings_pk": index.toString(),

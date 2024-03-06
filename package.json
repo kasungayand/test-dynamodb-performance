@@ -1,13 +1,13 @@
 {
   "dependencies": {
     "@aws-sdk/util-dynamodb": "^3.525.0",
-    "aws-sdk": "^2.1570.0"
+    "aws-sdk": "^2.1570.0",
+    "dotenv": "^16.4.5"
   },
   "name": "y",
   "description": "",
   "version": "1.0.0",
   "main": "app.js",
-  "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
