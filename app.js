@@ -1,8 +1,16 @@
 import dotenv from 'dotenv';
 dotenv.config();
+import { DynamoDBClient, GetItemCommand, ExecuteStatementCommand } from "@aws-sdk/client-dynamodb";
 import {marshall} from "@aws-sdk/util-dynamodb" 
 import {writeFileSync, createReadStream, access, writeFile, constants} from "fs"
 import {randomUUID} from "crypto"
+import {NodeHttpHandler} from "@aws-sdk/node-http-handler"
+
+// import {
+//     ExecuteStatementCommand,
+//     DynamoDBDocumentClient,
+//     GetCommand
+//   } from "@aws-sdk/lib-dynamodb";
 import {
     S3Client,
     PutObjectCommand,
@@ -10,7 +18,10 @@ import {
   } from "@aws-sdk/client-s3";
 
 let awsConfigParams = {
-    region: 'us-east-1'
+    region: 'us-east-1',  
+    requestHandler: new NodeHttpHandler({
+        socketAcquisitionWarningTimeout: 1000, // Set to a higher value in milliseconds
+    }),
 }
 
 if(process.env.local && parseInt(process.env.local) == 1)
@@ -22,6 +33,7 @@ if(process.env.local && parseInt(process.env.local) == 1)
         }
     }
 
+const client = new DynamoDBClient(awsConfigParams);
 const s3 = new S3Client(awsConfigParams)
 
 const generateSampleData = (fileIndex, itemIndex) => {
@@ -79,10 +91,27 @@ const insertItemsInBatches = async () => {
     }
 }
 
+const generateQueryExecution = async () => {
+    const command = new ExecuteStatementCommand({
+        Statement: `SELECT settings_pk,collection_id FROM "performance-testing-table"."collection_id-index"`,
+      });
+    const res  = await client.send(command);
+}
+
+const queryDynamoDB = async () => {
+    const promises = Array.from({ length: 1000 }, (_, index) => generateQueryExecution());
+    const responses = await Promise.all(promises)
+    console.log(responses.length)
+}
+
 // getS3Items()
 // .then(() => console.log('Data fetched successfully.'))
-// .catch((err) => console.error('Error inserting data:', err));
+// .catch((err) => console.error('Error fetching data:', err));
 
-insertItemsInBatches()
-  .then(() => console.log('Data inserted successfully.'))
-  .catch((err) => console.error('Error inserting data:', err));
+// insertItemsInBatches()
+//   .then(() => console.log('Data inserted successfully.'))
+//   .catch((err) => console.error('Error inserting data:', err));
+
+queryDynamoDB()
+    .then(() => console.log('Data fetched successfully.'))
+    .catch((err) => console.error('Error fetching data:', err));
