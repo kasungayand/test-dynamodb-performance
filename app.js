@@ -128,7 +128,7 @@ const getDocumentCount = async (results) => {
 const queryDynamoDB = async () => {
     try{
         console.time("Total execution time")
-        const promises = Array.from({ length: 3000 }, (_, index) => generateQueryExecution());
+        const promises = Array.from({ length: 5000 }, (_, index) => generateQueryExecution());
         const responses = await Promise.all(promises)
         console.log('Data fetched successfully.')
         console.log("Promise all response length",responses.length)
