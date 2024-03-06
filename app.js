@@ -99,9 +99,10 @@ const generateQueryExecution = async () => {
 }
 
 const queryDynamoDB = async () => {
-    const promises = Array.from({ length: 1000 }, (_, index) => generateQueryExecution());
+    console.time("total execution time")
+    const promises = Array.from({ length: 400 }, (_, index) => generateQueryExecution());
     const responses = await Promise.all(promises)
-    console.log(responses.length)
+    return responses.length
 }
 
 // getS3Items()
@@ -113,5 +114,9 @@ const queryDynamoDB = async () => {
 //   .catch((err) => console.error('Error inserting data:', err));
 
 queryDynamoDB()
-    .then(() => console.log('Data fetched successfully.'))
+    .then((count) => {
+        console.log("Results length", count)
+        console.log('Data fetched successfully.')
+        console.timeEnd("total execution time")
+    })
     .catch((err) => console.error('Error fetching data:', err));
