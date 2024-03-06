@@ -121,7 +121,7 @@ const generateQueryExecution = async () => {
 
 const queryDynamoDB = async () => {
     console.time("total execution time")
-    const promises = Array.from({ length: 500 }, (_, index) => generateQueryExecution());
+    const promises = Array.from({ length: 1000 }, (_, index) => generateQueryExecution());
     const responses = await Promise.all(promises)
     return responses.length
 }
