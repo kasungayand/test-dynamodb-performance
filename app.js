@@ -30,9 +30,7 @@ const generateSampleData = (index) => {
         "timestamp": Date.now().toString(),
         "Title": "Book 101 Title",
         "ISBN": "111-1111111111",
-        "Authors": [
-            {"surname": "Joe","lastname":"Biden"}, 
-            {"surname": "Joe","lastname":"Biden"}],
+        "Author": {"surname": "Joe","lastname":"Biden"},
         "Price": "200",
         "Dimensions": "8.5 x 11.0 x 0.5",
         "PageCount": "500",
