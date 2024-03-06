@@ -114,7 +114,7 @@ const insertItemsInBatches = async () => {
 
 const generateQueryExecution = async () => {
     const command = new ExecuteStatementCommand({
-        Statement: `SELECT settings_pk,collection_id FROM "performance-testing-table"."collection_id-timestamp-index"`,
+        Statement: `SELECT settings_pk,collection_id FROM "performance-testing-table"`,
         Limit: 1
       });
     return retryableCommand(command, client)
