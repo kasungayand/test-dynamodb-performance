@@ -119,11 +119,26 @@ const generateQueryExecution = async () => {
     return retryableCommand(command, client)
 }
 
+const getDocumentCount = async (results) => {
+    const documents = results.map(result => result ? result.Items.length : 0);
+   return documents.reduce((acc, count) => acc + count, 0);
+}
+
 const queryDynamoDB = async () => {
-    console.time("total execution time")
-    const promises = Array.from({ length: 1000 }, (_, index) => generateQueryExecution());
-    const responses = await Promise.all(promises)
-    return responses.length
+    try{
+        console.time("Total execution time")
+        const promises = Array.from({ length: 1000 }, (_, index) => generateQueryExecution());
+        const responses = await Promise.all(promises)
+        console.log('Data fetched successfully.')
+        console.log("Promise all response length",responses.length)
+        console.time('Data loop time')
+        getDocumentCount(responses).then(count => {
+            console.timeEnd('Data loop time')
+            console.log("Total Document Count:", count);
+        })
+    }catch(err){
+        throw err
+    }
 }
 
 // getS3Items()
@@ -135,9 +150,7 @@ const queryDynamoDB = async () => {
 //   .catch((err) => console.error('Error inserting data:', err));
 
 queryDynamoDB()
-    .then((count) => {
-        console.log("Results length", count)
-        console.log('Data fetched successfully.')
-        console.timeEnd("total execution time")
+    .then(() => {
+        console.timeEnd("Total execution time")
     })
     .catch((err) => console.error('Error fetching data:', err));
