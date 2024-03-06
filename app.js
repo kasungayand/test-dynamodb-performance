@@ -5,12 +5,6 @@ import {marshall} from "@aws-sdk/util-dynamodb"
 import {writeFileSync, createReadStream, access, writeFile, constants} from "fs"
 import {randomUUID} from "crypto"
 import {NodeHttpHandler} from "@aws-sdk/node-http-handler"
-
-// import {
-//     ExecuteStatementCommand,
-//     DynamoDBDocumentClient,
-//     GetCommand
-//   } from "@aws-sdk/lib-dynamodb";
 import {
     S3Client,
     PutObjectCommand,
@@ -35,6 +29,33 @@ if(process.env.local && parseInt(process.env.local) == 1)
 
 const client = new DynamoDBClient(awsConfigParams);
 const s3 = new S3Client(awsConfigParams)
+
+/**
+ * 
+ * @param {*} command 
+ * @param {*} client . Only need for the testcase execution.
+ * @returns 
+ */
+const retryableCommand = async (command, client) => {
+    const maxRetryAttempts = 4;
+    let retryCount = 0;
+    const retryErrors = ["LimitExceededException","ProvisionedThroughputExceeded",
+      "ProvisionedThroughputExceededException","RequestLimitExceeded","ThrottlingException","ExpiredTokenException"]
+    while (true) {
+          try {
+              const response = client ? await client.send(command) : await dynamoDb.send(command);
+              return response;
+          } catch (error) {
+              if (retryErrors.includes(error.name) && retryCount < maxRetryAttempts) {
+                  const retryDelay = 200 + retryCount * 1000
+                  await new Promise((resolve) => setTimeout(resolve, retryDelay));
+                  retryCount++;
+                  continue;
+              }
+              throw error;
+          }
+      }
+  }
 
 const generateSampleData = (fileIndex, itemIndex) => {
   const index = `${fileIndex}#${itemIndex}`
@@ -95,12 +116,12 @@ const generateQueryExecution = async () => {
     const command = new ExecuteStatementCommand({
         Statement: `SELECT settings_pk,collection_id FROM "performance-testing-table"."collection_id-index"`,
       });
-    const res  = await client.send(command);
+    return retryableCommand(command, client)
 }
 
 const queryDynamoDB = async () => {
     console.time("total execution time")
-    const promises = Array.from({ length: 400 }, (_, index) => generateQueryExecution());
+    const promises = Array.from({ length: 500 }, (_, index) => generateQueryExecution());
     const responses = await Promise.all(promises)
     return responses.length
 }
