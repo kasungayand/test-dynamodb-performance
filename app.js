@@ -37,7 +37,7 @@ const s3 = new S3Client(awsConfigParams)
  * @returns 
  */
 const retryableCommand = async (command, client) => {
-    const maxRetryAttempts = 4;
+    const maxRetryAttempts = 10;
     let retryCount = 0;
     const retryErrors = ["LimitExceededException","ProvisionedThroughputExceeded",
       "ProvisionedThroughputExceededException","RequestLimitExceeded","ThrottlingException","ExpiredTokenException"]
