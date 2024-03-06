@@ -1,7 +1,13 @@
-require('dotenv').config()
-const AWS = require('aws-sdk');
-const { marshall } = require('@aws-sdk/util-dynamodb');
-const fs = require('fs');
+import dotenv from 'dotenv';
+dotenv.config();
+import {marshall} from "@aws-sdk/util-dynamodb" 
+import {writeFileSync, createReadStream, access, writeFile, constants} from "fs"
+import {randomUUID} from "crypto"
+import {
+    S3Client,
+    PutObjectCommand,
+    GetObjectCommand
+  } from "@aws-sdk/client-s3";
 
 let awsConfigParams = {
     region: 'us-east-1'
@@ -10,24 +16,21 @@ let awsConfigParams = {
 if(process.env.local && parseInt(process.env.local) == 1)
     awsConfigParams = {
         ...awsConfigParams,
-        accessKeyId: process.env.aws_access_key, // Replace with your AWS access key
-        secretAccessKey: process.env.aws_secret_access_key // Replace with your AWS secret key
+        credentials:{
+            accessKeyId: process.env.aws_access_key, // Replace with your AWS access key
+            secretAccessKey: process.env.aws_secret_access_key // Replace with your AWS secret key
+        }
     }
 
-AWS.config.update(awsConfigParams);
+const s3 = new S3Client(awsConfigParams)
 
-const dynamoDB = new AWS.DynamoDB.DocumentClient();
-const s3 = new AWS.S3();
-
-const tableName = 'test-dynamodb'; // Replace with your DynamoDB table name
-const numberOfItems = 1000000;
-
-// Function to generate sample data
-const generateSampleData = (index) => {
+const generateSampleData = (fileIndex, itemIndex) => {
+  const index = `${fileIndex}#${itemIndex}`
   return {
     "Item": marshall({
         "settings_pk": index.toString(),
         "timestamp": Date.now().toString(),
+        "collection_id": fileIndex,
         "Title": "Book 101 Title",
         "ISBN": "111-1111111111",
         "Authors": [{"surname": "Joe","lastname":"Biden"},{"surname": "Joe","lastname":"Biden"}],
@@ -41,54 +44,45 @@ const generateSampleData = (index) => {
     };
 };
 
-// Function to insert items into DynamoDB in batches
-// const insertItemsInBatches = async () => {
-//   const batchWriteParams = { RequestItems: {} };
-
-//   for (let i = 0; i < numberOfItems; i++) {
-//     const item = generateSampleData(i);
-//     batchWriteParams.RequestItems[tableName] = batchWriteParams.RequestItems[tableName] || [];
-//     batchWriteParams.RequestItems[tableName].push({
-//       PutRequest: {
-//         Item: item
-//       }
-//     });
-
-//     if (batchWriteParams.RequestItems[tableName].length === 25) {
-//         console.log(batchWriteParams)
-//       await dynamoDB.batchWrite(batchWriteParams).promise();
-//       batchWriteParams.RequestItems[tableName] = [];
-//     }
-//   }
-
-//   // Write the remaining items
-//   if (batchWriteParams.RequestItems[tableName].length > 0) {
-//     await dynamoDB.batchWrite(batchWriteParams).promise();
-//   }
-// };
+const getS3Items = async () => {
+    const command = new GetObjectCommand({
+        Bucket: "dynamodb-load-test-data",
+        Key: "output-909.json",
+      });
+      try {
+        const response = await s3.send(command);
+        // The Body object also has 'transformToByteArray' and 'transformToWebStream' methods.
+        const str = await response.Body.transformToString();
+        console.log(str);
+      } catch (err) {
+        console.error(err);
+      }
+}
 
 const insertItemsInBatches = async () => {
-    for(let j=1;j<=1000;j++){
-        const jsonFilePath = `output-${j}.json`;
-        fs.access(`outputs/${jsonFilePath}`, fs.constants.F_OK, async (err) => {
+    for(let j=1;j<=1;j++){
+        const jsonFilePath = `output-${randomUUID()}.json`;
+        access(`outputs/${jsonFilePath}`, constants.F_OK, async (err) => {
             if (err) {
-                fs.writeFile(`outputs/${jsonFilePath}`, '', (err) => {
+                writeFile(`outputs/${jsonFilePath}`, '', (err) => {
                 });
             }
-            const params = {
-                Bucket: 'dynamodb-load-test-data',
-                Key: jsonFilePath,
-                Body: fs.createReadStream(`outputs/${jsonFilePath}`)
-            };
-            const records = Array.from({ length: 1001 }, (_, index) => generateSampleData(`${j}#${index}`));
+            const records = Array.from({ length: 2 }, (_, index) => generateSampleData(j, index));
             let jsonString = JSON.stringify(records).replace(/^[\[\]]|[\[\]]$/g, '').replace(/(?<=})\s*,\s*(?={"Item")/g, '');
-            fs.writeFileSync(`outputs/${jsonFilePath}`, jsonString);
-            const data = await s3.upload(params).promise();   
+            writeFileSync(`outputs/${jsonFilePath}`, jsonString);
+            const data = await s3.send(new PutObjectCommand({
+                Bucket: 'dynamodb-load-test-data',
+                Key: `files/${jsonFilePath}`,
+                Body: createReadStream(`outputs/${jsonFilePath}`)
+            }));   
         });
     }
 }
 
-// Insert items into DynamoDB
+// getS3Items()
+// .then(() => console.log('Data fetched successfully.'))
+// .catch((err) => console.error('Error inserting data:', err));
+
 insertItemsInBatches()
   .then(() => console.log('Data inserted successfully.'))
   .catch((err) => console.error('Error inserting data:', err));
